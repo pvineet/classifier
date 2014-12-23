@@ -53,13 +53,14 @@ word_list = [
             "invoice",
             "confirmation",
             "confirmation voucher",
-            "voucher",
             "get us",
             "check in",
             "check-in",
             "check out",
             "check-out",
             "flight",
+            "work",
+            "working",
             ]
 def request_features(mail):
     features = {}
