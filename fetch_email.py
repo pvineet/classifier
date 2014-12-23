@@ -20,7 +20,7 @@ IGNORE_EMAILS = []
 CLIENT_SECRET_FILE = 'client_secret.json'
 
 # Check https://developers.google.com/gmail/api/auth/scopes for all available scopes
-OAUTH_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
+OAUTH_SCOPE = 'https://www.googleapis.com/auth/gmail.modify'
 
 # Location of the credentials storage file
 STORAGE = Storage('gmail.storage')
@@ -42,8 +42,8 @@ gmail_service = build('gmail', 'v1', http=http)
 
 messages = []
 query = 'in:inbox after:2014/12/01 from:@wns.com -from:noreply@wwstay.com'
-#query = 'in:inbox after:2014/12/01 RE: Sussex Requirement'
 user_id = 'me'
+new_req_label = {'addLabelIds': ['INBOX','Label_5',]}
 # Retrieve a page of threads
 response = gmail_service.users().messages().list(userId=user_id, q=query).execute()
 
@@ -63,7 +63,6 @@ i=1
 for msg in message_list:
     msg_id = msg['id']
     response = gmail_service.users().messages().get(userId='me', id=msg_id, format='raw').execute()
-
 
     msg_str = base64.urlsafe_b64decode(response['raw'].encode('utf-8'))
     mime_msg = email.message_from_string(msg_str)
@@ -97,8 +96,12 @@ for msg in message_list:
                         text = text.lower().split('regard')[0]
                     else:
                         continue
-                print text
-                print classify(text)
+                if classify(text) == 'new':
+                    print text
+                    try:
+                        label_response = gmail_service.users().messages().modify(userId='me', id=msg_id, body=new_req_label).execute()
+                    except errors.HttpError, error:
+                        print 'An error occurred: %s' % error
     else:
         pass
         #print i
