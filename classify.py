@@ -12,6 +12,7 @@ word_list = [
             "please book",
             "plz",
             "plz share",
+            "plz chk",
             "pls",
             "hotel",
             "provide",
@@ -52,7 +53,13 @@ word_list = [
             "invoice",
             "confirmation",
             "confirmation voucher",
+            "voucher",
             "get us",
+            "check in",
+            "check-in",
+            "check out",
+            "check-out",
+            "flight",
             ]
 def request_features(mail):
     features = {}
@@ -63,9 +70,6 @@ def request_features(mail):
             features["has (%s)" % word] = False   
     return features
 
-"""
-def train
-"""
 
 def classify(test_mail):
     featuresets = []
@@ -77,12 +81,12 @@ def classify(test_mail):
     return classifier.classify(request_features(test_mail.lower()))
 
 
-f_log = open('log', 'rb')
-
-for line in f_log.readlines():
-    if line.split(' ')[0] == 'FILE':
-        continue
-    else:
-        print line
-        print classify(line)
-f_log.close()
+#f_log = open('log', 'rb')
+#
+#for line in f_log.readlines():
+#    if line.split(' ')[0] == 'FILE':
+#        continue
+#    else:
+#        print line
+#        print classify(line)
+#f_log.close()
