@@ -4,6 +4,7 @@ import httplib2
 import base64
 import email
 
+from classify import *
 from  utils import *
 from xml.sax.saxutils import unescape
 from apiclient import errors
@@ -40,7 +41,7 @@ http = credentials.authorize(http)
 gmail_service = build('gmail', 'v1', http=http)
 
 messages = []
-query = 'in:inbox after:2014/12/01 from:@wns.com -from:noreply@wwstay.com '
+query = 'in:inbox after:2014/12/01 from:@wns.com -from:noreply@wwstay.com'
 #query = 'in:inbox after:2014/12/01 RE: Sussex Requirement'
 user_id = 'me'
 # Retrieve a page of threads
@@ -73,12 +74,7 @@ for msg in message_list:
                     content = base64.urlsafe_b64decode(m.get_payload())
                 else:
                     content = m.get_payload()
-                #file_name = str(i)+".txt"
-                #fo = open(file_name, "wb")
-                #fo.write(unescape(content))
-                #fo.close()
                 print type(content)
-                #print content.split('\n')
                 clean_mail = []
                 for line in content.lower().splitlines():
                     if not (line.rstrip() == '' or line.rstrip() == '=20'or line.rstrip() == None):
@@ -99,9 +95,10 @@ for msg in message_list:
     
                         text = text.lower().split('thank')[0]
                         text = text.lower().split('regard')[0]
-                        print text
                     else:
                         continue
+                print text
+                print classify(text)
     else:
         pass
         #print i
