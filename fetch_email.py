@@ -5,7 +5,7 @@ import base64
 import email
 
 from classify import *
-from  utils import *
+from utils import *
 from xml.sax.saxutils import unescape
 from apiclient import errors
 from apiclient.discovery import build
@@ -41,7 +41,7 @@ http = credentials.authorize(http)
 gmail_service = build('gmail', 'v1', http=http)
 
 messages = []
-query = 'in:inbox after:2014/12/01 from:@wns.com -from:noreply@wwstay.com'
+query = 'in:inbox after:2014/12/01 from:@wns.com -from:*@wwstay.com'
 user_id = 'me'
 new_req_label = {'addLabelIds': ['INBOX','Label_5',]}
 # Retrieve a page of threads
@@ -96,16 +96,25 @@ for msg in message_list:
                         text = text.lower().split('regard')[0]
                     else:
                         continue
+                """Classification code"""       
                 if classify(text) == 'new':
                     print text
+                    #check if the mail is from WWStay
                     try:
                         label_response = gmail_service.users().messages().modify(userId='me', id=msg_id, body=new_req_label).execute()
                     except errors.HttpError, error:
                         print 'An error occurred: %s' % error
+
+                    thread_id = msg['threadId']
+                    #get the thread
+                    thread_response = gmail_service.users().threads().get(userId=user_id, id=thread_id).execute()
+                    thread_messages = thread_response['messages']
+                    if thread_messages.pop()['id'] == msg['id']:
+                        print "Need follow up %s" % (msg['id'])
     else:
-        pass
+        #pass
         #print i
-        #print message['snippet']
+        print msg['id']
         #print m.get_content_type()
     i=i+1         
 
