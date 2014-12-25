@@ -12,6 +12,7 @@ from apiclient.discovery import build
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run
+from BeautifulSoup import BeautifulSoup
 
 #emails from these sources to be ignored
 IGNORE_EMAILS = []
@@ -97,6 +98,15 @@ def label_mail(text,msg_id):
     else:
         return 'others'
 
+def decode_content(msg):
+    if msg['Content-Transfer-Encoding'] == "base64":
+        return base64.urlsafe_b64decode(msg.get_payload())
+    else:
+        return msg.get_payload()
+
+def process_plain_text(msg):
+    content = decode_content(msg)
+    return split_mail(clean_mail(content))
 
 def parse_mails(message_list):
     for msg in message_list:
@@ -107,12 +117,7 @@ def parse_mails(message_list):
         if mime_msg.is_multipart():
             for m in mime_msg.walk():
                 if m.get_content_type() == "text/plain":
-                    if m['Content-Transfer-Encoding'] == "base64":
-                        content = base64.urlsafe_b64decode(m.get_payload())
-                    else:
-                        content = m.get_payload()
-                    text = split_mail(clean_mail(content))
-                    
+                    text = process_plain_text(m) 
                     if label_mail(text,msg_id) == 'new': 
                         thread_id = msg['threadId']
                         #get the thread
@@ -122,8 +127,15 @@ def parse_mails(message_list):
                             print "Need follow up %s" % (msg['id'])
         else:
             print mime_msg.get_content_type()
-            content = mime_msg.get_payload()
-            text = split_mail(clean_mail(content))
+            print "SINGLE PART MAIL"
+            if mime_msg.get_content_type() == "text/plain":
+                text = process_plain_text(mime_msg)
+                print text
+            elif mime_msg.get_content_type() == "text/html":
+                content = BeautifulSoup(mime_msg.get_payload())
+                print content
+                print content.get_text()
+                    
 
 def main():
     parse_mails(read_mails())
