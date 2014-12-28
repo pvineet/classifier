@@ -1,10 +1,30 @@
 import csv
 import nltk
 
+months = [
+        "jan",
+        "feb",
+        "march",
+        "mar",
+        "april",
+        "apr",
+        "may",
+        "june",
+        "jun",
+        "july",
+        "jul",
+        "aug",
+        "sept",
+        "sep",
+        "oct",
+        "nov",
+        "dec",
+        ]
+
 word_list = [
             "options",
             "option",
-            "please",
+            #"please",
             "please check",
             "please confirm",
             "please find",
@@ -15,6 +35,7 @@ word_list = [
             "plz chk",
             "pls",
             "hotel",
+            "hotels",
             "provide",
             "send",
             "confirm",
@@ -25,6 +46,7 @@ word_list = [
             "booking",
             "book",
             "cancel",
+            "cancelled",
             "this",
             "location",
             "preferred",
@@ -61,14 +83,28 @@ word_list = [
             "flight",
             "work",
             "working",
+            "property",
+            "properties",
+            "date",
+            "dates",
+            "block",
+            "as discussed",
+            "alternate",
+            "clarify",
+            "update",
             ]
+
 def request_features(mail):
     features = {}
     for word in word_list:
         if word in mail.lower().split(' '):
             features["has (%s)" %  word] = True
         else:
-            features["has (%s)" % word] = False   
+            features["has (%s)" % word] = False 
+    for month in months:
+        if month in mail.lower():
+            features["has month"] = True
+            break
     return features
 
 
