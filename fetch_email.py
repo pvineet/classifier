@@ -3,6 +3,8 @@
 import httplib2
 import base64
 import email
+import csv 
+import re
 
 from classify import *
 from utils import *
@@ -42,7 +44,7 @@ http = credentials.authorize(http)
 gmail_service = build('gmail', 'v1', http=http)
 
 messages = []
-query = 'in:inbox after:2014/12/01  -from:*@wwstay.com'
+query = 'in:inbox after:2014/11/01  -from:*@wwstay.com'
 user_id = 'me'
 new_req_label = {'addLabelIds': ['INBOX','Label_5',]}
 
@@ -106,35 +108,48 @@ def decode_content(msg):
 
 def process_plain_text(msg):
     content = decode_content(msg)
+    content = re.sub('[,]', ' ', content)
     return split_mail(clean_mail(content))
 
 def parse_mails(message_list):
-    for msg in message_list:
-        msg_id = msg['id']
-        response = gmail_service.users().messages().get(userId='me', id=msg_id, format='raw').execute()
-        msg_str = base64.urlsafe_b64decode(response['raw'].encode('utf-8'))
-        mime_msg = email.message_from_string(msg_str)
-        if mime_msg.is_multipart():
-            for m in mime_msg.walk():
-                if m.get_content_type() == "text/plain":
-                    text = process_plain_text(m) 
-                    if label_mail(text,msg_id) == 'new': 
-                        thread_id = msg['threadId']
-                        #get the thread
-                        thread_response = gmail_service.users().threads().get(userId=user_id, id=thread_id).execute()
-                        thread_messages = thread_response['messages']
-                        if thread_messages.pop()['id'] == msg['id']:
-                            print "Need follow up %s" % (msg['id'])
-        else:
-            print mime_msg.get_content_type()
-            print "SINGLE PART MAIL"
-            if mime_msg.get_content_type() == "text/plain":
-                text = process_plain_text(mime_msg)
-                print text
-            elif mime_msg.get_content_type() == "text/html":
-                content = BeautifulSoup(mime_msg.get_payload())
-                print content
-                print content.get_text()
+    with open('log.csv', 'w') as csvfile:
+        fieldnames = ['text', 'label']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader() 
+        for msg in message_list:
+            msg_id = msg['id']
+            response = gmail_service.users().messages().get(userId='me', id=msg_id, format='raw').execute()
+            msg_str = base64.urlsafe_b64decode(response['raw'].encode('utf-8'))
+            mime_msg = email.message_from_string(msg_str)
+            if mime_msg.is_multipart():
+                for m in mime_msg.walk():
+                    if m.get_content_type() == "text/plain":
+                        text = process_plain_text(m) 
+                        if label_mail(text,msg_id) == 'new':
+                            writer.writerow({'text': text, 'label': 'new'})
+                            thread_id = msg['threadId']
+                            #get the thread
+                            thread_response = gmail_service.users().threads().get(userId=user_id, id=thread_id).execute()
+                            thread_messages = thread_response['messages']
+                            if thread_messages.pop()['id'] == msg['id']:
+                                print "Need follow up %s" % (msg['id'])
+                        else:
+                            writer.writerow({'text': text, 'label': 'others'})
+                            
+            else:
+                print mime_msg.get_content_type()
+                print "SINGLE PART MAIL"
+                if mime_msg.get_content_type() == "text/plain":
+                    text = process_plain_text(mime_msg)
+                    print text
+                elif mime_msg.get_content_type() == "text/html":
+                    content = BeautifulSoup(mime_msg.get_payload())
+                    print content
+                    try:
+                        print content.get_text()
+                    except TypeError:
+                        pass
+    csvfile.close()
                     
 
 def main():
