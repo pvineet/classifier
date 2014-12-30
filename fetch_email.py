@@ -113,7 +113,7 @@ def process_plain_text(msg):
 
 def parse_mails(message_list):
     with open('log.csv', 'w') as csvfile:
-        fieldnames = ['text', 'label']
+        fieldnames = ['msg_id','text', 'label']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader() 
         for msg in message_list:
@@ -126,7 +126,7 @@ def parse_mails(message_list):
                     if m.get_content_type() == "text/plain":
                         text = process_plain_text(m) 
                         if label_mail(text,msg_id) == 'new':
-                            writer.writerow({'text': text, 'label': 'new'})
+                            writer.writerow({'msg_id':msg_id, 'text': text, 'label': 'new'})
                             thread_id = msg['threadId']
                             #get the thread
                             thread_response = gmail_service.users().threads().get(userId=user_id, id=thread_id).execute()
@@ -134,14 +134,17 @@ def parse_mails(message_list):
                             if thread_messages.pop()['id'] == msg['id']:
                                 print "Need follow up %s" % (msg['id'])
                         else:
-                            writer.writerow({'text': text, 'label': 'others'})
+                            writer.writerow({'msg_id':msg_id, 'text': text, 'label': 'others'})
                             
             else:
                 print mime_msg.get_content_type()
                 print "SINGLE PART MAIL"
                 if mime_msg.get_content_type() == "text/plain":
                     text = process_plain_text(mime_msg)
-                    print text
+                    if label_mail(text,msg_id) == 'new':
+                        writer.writerow({'msg_id':msg_id, 'text': text, 'label': 'new'})
+                    else:
+                        writer.writerow({'msg_id':msg_id, 'text': text, 'label': 'others'})
                 elif mime_msg.get_content_type() == "text/html":
                     content = BeautifulSoup(mime_msg.get_payload())
                     print content
