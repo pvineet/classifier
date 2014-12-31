@@ -72,6 +72,7 @@ word_list = [
             "payment",
             "report",
             "voucher",
+            "vouchers",
             "invoice",
             "confirmation",
             "confirmation voucher",
