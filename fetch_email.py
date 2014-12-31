@@ -7,7 +7,6 @@ import csv
 import re
 
 from classify import *
-from utils import *
 from xml.sax.saxutils import unescape
 from apiclient import errors
 from apiclient.discovery import build
@@ -65,7 +64,7 @@ def read_mails():
 def clean_mail(content):
     clean_mail = []
     for line in content.lower().splitlines():
-        if not (line.rstrip() == '' or line.rstrip() == '=20'or line.rstrip() == None):
+        if not (line.rstrip() == '' or line.rstrip() == None):
             if not line.strip()[0] == '>':
                 if line.split(':')[0].lower() == 'from': 
                     found_from = True
@@ -73,6 +72,8 @@ def clean_mail(content):
                     found_from = False
                     break
                 else:
+                    if "= " in line or "20=" in line:
+                        line.replace("= ",'')
                     clean_mail.append(line.rstrip())
             else:   
                 break
@@ -124,7 +125,7 @@ def parse_mails(message_list):
             if mime_msg.is_multipart():
                 for m in mime_msg.walk():
                     if m.get_content_type() == "text/plain":
-                        text = process_plain_text(m) 
+                        text = process_plain_text(m)
                         if label_mail(text,msg_id) == 'new':
                             writer.writerow({'msg_id':msg_id, 'text': text, 'label': 'new'})
                             thread_id = msg['threadId']
