@@ -93,6 +93,7 @@ word_list = [
             "clarify",
             "update",
             "passport",
+            "please forward us the rates for the below preferred property",
             ]
 
 def request_features(mail):
